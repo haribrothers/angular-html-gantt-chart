@@ -113,6 +113,11 @@ p {
           display: flex;
           justify-content: start;
 
+          .progress {
+            display: flex;
+            justify-content: start;
+          }
+
           .progress-completed {
             height: 100%;
             width: 50%;
@@ -121,8 +126,9 @@ p {
 
           .progress-extended {
             height: 100%;
-            width: 50%;
-            background: red;
+            flex: 1;
+            // width: 50%;
+            background: #F37807;
           }
         }
 

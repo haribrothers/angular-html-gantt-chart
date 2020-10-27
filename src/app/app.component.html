@@ -71,7 +71,7 @@
     <div class="gantt-marker-layout" [style.width]="timeArr.length * 24 + 'px'">
       <div
         class="current-time-indicator"
-        [style.left]="diff_minutes(currentTime, startTime) + 'px'"
+        [style.left]="diffMinutes(currentTime, startTime) + 'px'"
       ></div>
       <div
         class="gantt-cell gantt-grid-cell gantt-cell-divider"
@@ -83,12 +83,12 @@
         [style.width]="getSTWidth(item) + 'px'"
         [style.z-index]="2"
       >
-        <label class="label-start-time"
-          >{{getSTStartingTime(item).toLocaleTimeString().substr(0,5)}}</label
-        >
-        <label class="label-end-time"
-          >{{getSTEndTime(item).toLocaleTimeString().substr(0,5)}}</label
-        >
+        <label class="label-start-time">
+          {{getSTStartingTime(item).toLocaleTimeString().substr(0,5)}}
+        </label>
+        <label class="label-end-time">
+          {{getSTEndTime(item).toLocaleTimeString().substr(0,5)}}
+        </label>
       </div>
       <div
         class="gantt-progress-bar"
@@ -96,19 +96,20 @@
         [style.width]="getETWidth(item) + 'px'"
       >
         <div class="progress-container">
-          <div
-            class="progress-completed"
-            [style.width]="getProgress(item) + 'px'"
-          ></div>
-          <div class="progress-incomplete"></div>
+          <div class="progress" [style.width]="getProgress(item) + 'px'">
+            <div
+              class="progress-completed"
+              [style.width]="getProgressCompleted(item) + 'px'"
+            ></div>
+            <div class="progress-extended"></div>
+          </div>
         </div>
-        <label class="label-start-time"
-          >{{getETStartingTime(item).toLocaleTimeString().substr(0,5)}}</label
-        >
-        <label class="label-end-time"
-          >{{getETEndTime(item).toLocaleTimeString().substr(0,5)}}</label
-        >
-        <!-- <label>{{item.etd.toLocaleTimeString().substr(0,5)}}</label> -->
+        <label class="label-start-time">
+          {{getETStartingTime(item).toLocaleTimeString().substr(0,5)}}
+        </label>
+        <label class="label-end-time">
+          {{getETEndTime(item).toLocaleTimeString().substr(0,5)}}
+        </label>
       </div>
     </div>
   </div>

@@ -2,16 +2,32 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
-  VERSION,
+OnDestroy,
+    VERSION,
   ViewChild
 } from "@angular/core";
+import { interval } from "rxjs";
+import { map } from "rxjs/operators";
+
+export interface GanttChartData {
+  ghostBar?: GanttChartBar;
+  actualBar?: GanttChartBar;
+  data?: any;
+}
+
+export interface GanttChartBar {
+  xPos?: number;
+  width?: number;
+  progress?: number;
+  completed?: number;
+}
 
 @Component({
   selector: "my-app",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"]
 })
-export class AppComponent implements AfterViewInit {
+export class AppComponent implements AfterViewInit, OnDestroy {
   name = "Angular " + VERSION.major;
 
   @ViewChild("ganttChartContainer") ganttChartContainer;
@@ -22,49 +38,54 @@ export class AppComponent implements AfterViewInit {
   public timeArr = [];
   public zoom = 10;
   public timeRange = 6 * 60;
+  public ganttChartData = [];
+  public counter;
 
   public schedule = [
     {
       flightType: "TAF",
       arrivalFlightNo: "SI123",
       orgin: "BOM",
-      sta: new Date("10/27/2020 10:00:00"),
-      eta: new Date("10/27/2020 10:15:00"),
-      ata: new Date("10/27/2020 10:15:00"),
+      sta: new Date("10/27/2020 14:00:00"),
+      eta: new Date("10/27/2020 14:15:00"),
+      ata: new Date("10/27/2020 14:15:00"),
       departureFlighNo: "SI124",
       destination: "BOM",
-      std: new Date("10/27/2020 11:00:00"),
-      etd: new Date("10/27/2020 11:15:00"),
-      atd: new Date("10/27/2020 11:15:00"),
-      groundTime: 60
+      std: new Date("10/27/2020 15:00:00"),
+      etd: new Date("10/27/2020 15:15:00"),
+      atd: new Date("10/27/2020 15:15:00"),
+      groundTime: 60,
+      status: "COMPLETED"
     },
     {
       flightType: "TAF",
       arrivalFlightNo: "SI125",
       orgin: "BOM",
-      sta: new Date("10/27/2020 10:30:00"),
-      eta: new Date("10/27/2020 10:45:00"),
-      ata: new Date("10/27/2020 10:45:00"),
+      sta: new Date("10/27/2020 14:30:00"),
+      eta: new Date("10/27/2020 14:45:00"),
+      ata: new Date("10/27/2020 14:45:00"),
       departureFlighNo: "SI126",
       destination: "HYD",
-      std: new Date("10/27/2020 11:45:00"),
-      etd: new Date("10/27/2020 11:45:00"),
-      atd: new Date("10/27/2020 11:45:00"),
-      groundTime: 60
+      std: new Date("10/27/2020 15:45:00"),
+      etd: new Date("10/27/2020 15:45:00"),
+      atd: new Date("10/27/2020 15:45:00"),
+      groundTime: 60,
+      status: "COMPLETED"
     },
     {
       flightType: "TAF",
       arrivalFlightNo: "SI127",
       orgin: "DEL",
       sta: new Date("10/27/2020 15:00:00"),
-      eta: new Date("10/27/2020 16:00:00"),
-      ata: new Date("10/27/2020 16:00:00"),
+      eta: new Date("10/27/2020 15:10:00"),
+      ata: new Date("10/27/2020 15:10:00"),
       departureFlighNo: "SI128",
       destination: "BOM",
-      std: new Date("10/27/2020 16:30:00"),
-      etd: new Date("10/27/2020 17:30:00"),
+      std: new Date("10/27/2020 16:00:00"),
+      etd: new Date("10/27/2020 16:10:00"),
       // atd: new Date("10/27/2020 15:30:00"),
-      groundTime: 60
+      groundTime: 60,
+      status: "IN PROGRESS"
     },
     {
       flightType: "AF",
@@ -73,7 +94,8 @@ export class AppComponent implements AfterViewInit {
       sta: new Date("10/27/2020 14:52:00"),
       eta: new Date("10/27/2020 16:12:00"),
       // ata: new Date('10/27/2020 10:32:00'),
-      groundTime: 60
+      groundTime: 60,
+      status: "IN PROGRESS"
     },
     {
       flightType: "BF",
@@ -82,38 +104,19 @@ export class AppComponent implements AfterViewInit {
       std: new Date("10/27/2020 16:30:00"),
       etd: new Date("10/27/2020 17:40:00"),
       // atd: new Date('10/27/2020 12:15:00'),
-      groundTime: 60
-    }
-  ];
-
-  public tasks = [
-    {
-      name: "Do things",
-      category: "Óscar",
-      from: new Date("10/26/2020 21:00:00"),
-      to: new Date("10/27/2020 00:00:00"),
-      comment: "Things never end"
-    },
-    {
-      name: "More stuff",
-      category: "Peter",
-      from: new Date("10/26/2020 23:45:00"),
-      to: new Date("10/27/2020 00:30:00"),
-      comment: "Even more stuff"
-    },
-    {
-      name: "Last but not least",
-      category: "Johnny",
-      from: new Date("10/27/2020 00:30:00"),
-      to: new Date("10/27/2020 01:45:00"),
-      comment: "Agggh"
+      groundTime: 60,
+      status: "IN PROGRESS"
     }
   ];
 
   constructor() {
-    this.timeArr = [];
-    console.log(this.currentTime.getMinutes() % this.zoom);
+    this.configureGantChart();
+  }
 
+
+  configureGantChart() {
+    this.timeArr = [];
+    this.currentTime = new Date();
     this.currentTime.setSeconds(0);
 
     let updatedCurrentTime = new Date(this.currentTime);
@@ -121,15 +124,12 @@ export class AppComponent implements AfterViewInit {
       updatedCurrentTime.getMinutes() -
         (updatedCurrentTime.getMinutes() % this.zoom)
     );
-    console.log(this.currentTime);
     this.startTime = new Date(
       updatedCurrentTime.getTime() - this.timeRange * 60 * 1000
     );
     this.endTime = new Date(
       updatedCurrentTime.getTime() + this.timeRange * 60 * 1000
     );
-    console.log("startTime", this.startTime.toLocaleTimeString());
-    console.log("endTime", this.endTime.toLocaleTimeString());
 
     let newTime = this.startTime;
 
@@ -138,110 +138,90 @@ export class AppComponent implements AfterViewInit {
       newTime = new Date(newTime.getTime() + this.zoom * 60 * 1000);
       this.timeArr.push(newTime);
     }
-
-    // (this.ganttChartContainer
-    //   .nativeElement as HTMLDivElement).scrollLeft = this.diff_minutes(
-    //   this.currentTime,
-    //   this.startTime
-    // );
   }
+
   ngAfterViewInit(): void {
     this.centerCurrentTime();
-    (this.ganttChartContainer.nativeElement as HTMLDivElement).addEventListener(
-      "resize",
-      () => {
-        console.log("hi");
-        this.centerCurrentTime();
-      }
-    );
+    this.counter = interval(5000).subscribe(x => {
+      console.log("isRunning");
+      this.configureGantChart();
+      this.centerCurrentTime();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.counter.unsubscribe()
   }
 
   centerCurrentTime() {
-    (this.ganttChartContainer.nativeElement as HTMLDivElement).scrollLeft =
-      this.diff_minutes(this.currentTime, this.startTime) -
-      (this.ganttChartContainer.nativeElement as HTMLDivElement).clientWidth /
-        2 +
+    const ganttChartElm = this.ganttChartContainer
+      .nativeElement as HTMLDivElement;
+    ganttChartElm.scrollLeft =
+      this.diffMinutes(this.currentTime, this.startTime) -
+      ganttChartElm.clientWidth / 2 +
       200;
   }
 
-  diff_minutes(dt2, dt1): number {
+  diffMinutes(dt2, dt1): number {
     let diff = (dt2.getTime() - dt1.getTime()) / 1000;
     diff /= 60;
     return Math.round(diff) * (24 / this.zoom);
   }
 
   getSTPostion(task) {
+    let positionTime;
     if (task.flightType === "TAF" || task.flightType === "AF") {
-      let diff = (task.sta.getTime() - this.startTime) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      positionTime = task.sta;
     } else {
-      let bftime = new Date(task.std.getTime() - task.groundTime * 60 * 1000);
-      let diff = (bftime.getTime() - this.startTime) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      positionTime = new Date(task.std.getTime() - task.groundTime * 60 * 1000);
     }
+    return this.diffMinutes(positionTime, this.startTime);
   }
 
   getSTWidth(task) {
+    let startTime, endTime;
     if (task.flightType === "TAF") {
-      let diff = (task.std.getTime() - task.sta.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      startTime = task.sta;
+      endTime = task.std;
     } else if (task.flightType === "AF") {
-      let aftime = new Date(task.sta.getTime() + task.groundTime * 60 * 1000);
-      let diff = (aftime.getTime() - task.sta.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      startTime = task.sta;
+      endTime = new Date(task.sta.getTime() + task.groundTime * 60 * 1000);
     } else {
-      let bftime = new Date(task.std.getTime() - task.groundTime * 60 * 1000);
-      let diff = (task.std.getTime() - bftime.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      startTime = new Date(task.std.getTime() - task.groundTime * 60 * 1000);
+      endTime = task.std;
     }
+    return this.diffMinutes(endTime, startTime);
   }
 
   getETPostion(task) {
+    let positionTime;
     if (task.flightType === "TAF" || task.flightType === "AF") {
-      let time = task.ata ? task.ata : task.eta;
-      let diff = (time - this.startTime) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      positionTime = task.ata ? task.ata : task.eta;
     } else {
       let time = task.atd ? task.atd : task.etd;
-      let bftime = new Date(time.getTime() - task.groundTime * 60 * 1000);
-      let diff = (bftime.getTime() - this.startTime) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      positionTime = new Date(time.getTime() - task.groundTime * 60 * 1000);
     }
+    return this.diffMinutes(positionTime, this.startTime);
   }
 
   getETWidth(task) {
+    let startTime, endTime;
     if (task.flightType === "TAF") {
-      const starTime = task.ata ? task.ata : task.eta;
-      const endTime = task.atd ? task.atd : task.etd;
-      if (!task.atd) {
-      }
-      let diff = (endTime.getTime() - starTime.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      startTime = task.ata ? task.ata : task.eta;
+      endTime = task.atd ? task.atd : task.etd;
     } else if (task.flightType === "AF") {
-      const starTime = task.ata ? task.ata : task.eta;
-      const endTime = new Date(
-        starTime.getTime() + task.groundTime * 60 * 1000
-      );
-      let diff = (endTime.getTime() - starTime.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      startTime = task.ata ? task.ata : task.eta;
+      endTime = new Date(startTime.getTime() + task.groundTime * 60 * 1000);
     } else {
-      const endTime = task.atd ? task.atd : task.etd;
-      const starTime = new Date(
-        endTime.getTime() - task.groundTime * 60 * 1000
-      );
-      let diff = (endTime.getTime() - starTime.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
+      endTime = task.atd ? task.atd : task.etd;
+      startTime = new Date(endTime.getTime() - task.groundTime * 60 * 1000);
     }
+    if (task.status !== "COMPLETED") {
+      if (endTime < this.currentTime) {
+        endTime = new Date(this.currentTime.getTime() + this.zoom * 60 * 1000);
+      }
+    }
+    return this.diffMinutes(endTime, startTime);
   }
 
   getSTStartingTime(task) {
@@ -279,39 +259,43 @@ export class AppComponent implements AfterViewInit {
   }
 
   getProgress(task) {
-    if (task.flightType === "TAF") {
-      const starTime = task.ata ? task.ata : task.eta;
-      const endTime = task.atd ? task.atd : this.currentTime;
-      if (starTime > this.currentTime) return 0;
-      let diff = (endTime.getTime() - starTime.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
-    } else if (task.flightType === "AF") {
-      const starTime = task.ata ? task.ata : task.eta;
-      let endTime = new Date(starTime.getTime() + task.groundTime * 60 * 1000);
-      endTime = endTime > this.currentTime ? this.currentTime : endTime;
-      if (starTime > this.currentTime) return 0;
-      let diff = (endTime.getTime() - starTime.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
-    } else {
-      let endTime = task.atd ? task.atd : task.etd;
-      const starTime = new Date(
-        endTime.getTime() - task.groundTime * 60 * 1000
-      );
-      endTime = endTime > this.currentTime ? this.currentTime : endTime;
-      if (starTime > this.currentTime) return 0;
-      let diff = (endTime.getTime() - starTime.getTime()) / 1000;
-      diff /= 60;
-      return Math.round(diff) * (24 / this.zoom);
-    }
-  }
-
-  getProgress2(task) {
     let startTime, endTime;
     if (task.flightType === "TAF") {
       startTime = task.ata ? task.ata : task.eta;
       endTime = task.atd ? task.atd : this.currentTime;
+    } else if (task.flightType === "AF") {
+      startTime = task.ata ? task.ata : task.eta;
+      endTime = new Date(startTime.getTime() + task.groundTime * 60 * 1000);
+      endTime =
+        endTime > this.currentTime
+          ? this.currentTime
+          : endTime < this.currentTime
+          ? this.currentTime
+          : endTime;
+    } else {
+      endTime = task.atd ? task.atd : task.etd;
+      startTime = new Date(endTime.getTime() - task.groundTime * 60 * 1000);
+      endTime =
+        endTime > this.currentTime
+          ? this.currentTime
+          : endTime < this.currentTime
+          ? this.currentTime
+          : endTime;
+    }
+    if (startTime > this.currentTime) return 0;
+    return this.diffMinutes(endTime, startTime);
+  }
+
+  getProgressCompleted(task) {
+    let startTime, endTime;
+    if (task.flightType === "TAF") {
+      startTime = task.ata ? task.ata : task.eta;
+      endTime = task.atd ? task.atd : this.currentTime;
+      if (!task.atd) {
+        if (task.etd < this.currentTime) {
+          endTime = new Date(task.etd);
+        }
+      }
     } else if (task.flightType === "AF") {
       startTime = task.ata ? task.ata : task.eta;
       endTime = new Date(startTime.getTime() + task.groundTime * 60 * 1000);
@@ -322,8 +306,6 @@ export class AppComponent implements AfterViewInit {
       endTime = endTime > this.currentTime ? this.currentTime : endTime;
     }
     if (startTime > this.currentTime) return 0;
-    let diff = (endTime.getTime() - startTime.getTime()) / 1000;
-    diff /= 60;
-    return Math.round(diff) * (24 / this.zoom);
+    return this.diffMinutes(endTime, startTime);
   }
 }
