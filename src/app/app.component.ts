@@ -2,8 +2,8 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
-OnDestroy,
-    VERSION,
+  OnDestroy,
+  VERSION,
   ViewChild
 } from "@angular/core";
 import { interval } from "rxjs";
@@ -113,7 +113,6 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.configureGantChart();
   }
 
-
   configureGantChart() {
     this.timeArr = [];
     this.currentTime = new Date();
@@ -150,7 +149,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.counter.unsubscribe()
+    this.counter.unsubscribe();
   }
 
   centerCurrentTime() {

@@ -1,153 +1,55 @@
 <hello name="{{ name }}"></hello>
 <p>
-  Start editing to see some magic happen :)
+	Start editing to see some magic happen :)
 </p>
-<!-- <div class="chart-container">
-  <div class="left-container">
-    <div class="label-container">
-      <div class="label">Schedule</div>
-    </div>
-    <div class="data-container" *ngFor="let item of tasks">{{item.name}}</div>
-  </div>
-  <div class="right-container">
-    <div class="current-time-indicator" [style.left]="diff_minutes(currentTime, startTime) + 'px'"></div>
-    <div class="label-container" [style.width]="timeArr.length * 24 + 'px'">
-      <div *ngFor="let time of timeArr" class="label">
-        {{time.toLocaleTimeString().substr(0,5)}}
-      </div>
-    </div>
-    <div
-      class="data-container"
-      *ngFor="let item of tasks"
-      [style.width]="timeArr.length * 24 + 'px'"
-    >
-      <div class="grid" *ngFor="let time of timeArr"></div>
-      <div
-        class="progress-bar"
-        [style.left]="diff_minutes(item.from, startTime) + 'px'"
-        [style.width]="diff_minutes(item.to, item.from) + 'px'"
-      >
-        {{item.category}}
-      </div>
-    </div>
-  </div>
-</div> -->
 
 <div #ganttChartContainer class="chart-container">
-  <div
-    class="gantt-header-row "
-    [style.width]="timeArr.length * 24 + 400 + 'px'"
-  >
-    <div class="gantt-data-layout">
-      <div
-        class="gantt-header-cell gantt-header-sticky-cell gantt-header-cell-divider"
-        style="width:400px; min-width:400px"
-      >
-        Schedule
-      </div>
-    </div>
-    <div class="gantt-marker-layout" [style.width]="timeArr.length * 24 + 'px'">
-      <div
-        *ngFor="let time of timeArr"
-        class="gantt-header-cell gantt-square-cell gantt-header-cell-divider"
-      >
-        {{time.toLocaleTimeString().substr(0,5)}}
-      </div>
-    </div>
-  </div>
-  <div
-    class="gantt-row"
-    [style.width]="timeArr.length * 24 + 400 + 'px'"
-    *ngFor="let item of schedule"
-  >
-    <div class="gantt-data-layout">
-      <div
-        class="gantt-cell gantt-sticky-cell"
-        style="width:400px; min-width:400px"
-      >
-        Schedule
-      </div>
-    </div>
-    <div class="gantt-marker-layout" [style.width]="timeArr.length * 24 + 'px'">
-      <div
-        class="current-time-indicator"
-        [style.left]="diffMinutes(currentTime, startTime) + 'px'"
-      ></div>
-      <div
-        class="gantt-cell gantt-grid-cell gantt-cell-divider"
-        *ngFor="let time of timeArr"
-      ></div>
-      <div
-        class="gantt-progress-bar st"
-        [style.left]="getSTPostion(item) + 'px'"
-        [style.width]="getSTWidth(item) + 'px'"
-        [style.z-index]="2"
-      >
-        <label class="label-start-time">
+	<div class="gantt-header-row " [style.width]="timeArr.length * 24 + 400 + 'px'">
+		<div class="gantt-data-layout">
+			<div class="gantt-header-cell gantt-header-sticky-cell gantt-header-cell-divider"
+				style="width:400px; min-width:400px">
+				Schedule
+			</div>
+		</div>
+		<div class="gantt-marker-layout" [style.width]="timeArr.length * 24 + 'px'">
+			<div *ngFor="let time of timeArr" class="gantt-header-cell gantt-square-cell gantt-header-cell-divider">
+				{{time.toLocaleTimeString().substr(0,5)}}
+			</div>
+		</div>
+	</div>
+	<div class="gantt-row" [style.width]="timeArr.length * 24 + 400 + 'px'" *ngFor="let item of schedule">
+		<div class="gantt-data-layout">
+			<div class="gantt-cell gantt-sticky-cell" style="width:400px; min-width:400px">
+				Schedule
+			</div>
+		</div>
+		<div class="gantt-marker-layout" [style.width]="timeArr.length * 24 + 'px'">
+			<div class="current-time-indicator" [style.left]="diffMinutes(currentTime, startTime) + 'px'"></div>
+			<div class="gantt-cell gantt-grid-cell gantt-cell-divider" *ngFor="let time of timeArr"></div>
+			<div class="gantt-progress-bar st" [style.left]="getSTPostion(item) + 'px'"
+				[style.width]="getSTWidth(item) + 'px'" [style.z-index]="2">
+				<label class="label-start-time">
           {{getSTStartingTime(item).toLocaleTimeString().substr(0,5)}}
         </label>
-        <label class="label-end-time">
+				<label class="label-end-time">
           {{getSTEndTime(item).toLocaleTimeString().substr(0,5)}}
         </label>
-      </div>
-      <div
-        class="gantt-progress-bar"
-        [style.left]="getETPostion(item) + 'px'"
-        [style.width]="getETWidth(item) + 'px'"
-      >
-        <div class="progress-container">
-          <div class="progress" [style.width]="getProgress(item) + 'px'">
-            <div
-              class="progress-completed"
-              [style.width]="getProgressCompleted(item) + 'px'"
-            ></div>
-            <div class="progress-extended"></div>
-          </div>
-        </div>
-        <label class="label-start-time">
+			</div>
+			<div class="gantt-progress-bar" [style.left]="getETPostion(item) + 'px'"
+				[style.width]="getETWidth(item) + 'px'">
+				<div class="progress-container">
+					<div class="progress" [style.width]="getProgress(item) + 'px'">
+						<div class="progress-completed" [style.width]="getProgressCompleted(item) + 'px'"></div>
+						<div class="progress-extended"></div>
+					</div>
+				</div>
+				<label class="label-start-time">
           {{getETStartingTime(item).toLocaleTimeString().substr(0,5)}}
         </label>
-        <label class="label-end-time">
+				<label class="label-end-time">
           {{getETEndTime(item).toLocaleTimeString().substr(0,5)}}
         </label>
-      </div>
-    </div>
-  </div>
-
-  <!-- <div class="gantt-body">
-    <div class="left-container">
-      <div class="data-container" *ngFor="let item of schedule">
-        {{item.arrivalFlightNo}} {{item.departureFlighNo}}
-      </div>
-    </div>
-    <div #ganttChartContainer class="right-container">
-      <div
-        class="current-time-indicator"
-        [style.left]="diff_minutes(currentTime, startTime) + 'px'"
-      ></div>
-
-      <div
-        class="data-container"
-        *ngFor="let item of schedule"
-        [style.width]="timeArr.length * 24 + 'px'"
-      >
-        <div class="grid" *ngFor="let time of timeArr"></div>
-        <div
-          class="progress-bar st"
-          [style.left]="getSTPostion(item) + 'px'"
-          [style.width]="getSTWidth(item) + 'px'"
-          [style.z-index]="2"
-        >
-          {{item.groundTime}}
-        </div>
-        <div
-          class="progress-bar"
-          [style.left]="getETPostion(item) + 'px'"
-          [style.width]="getETWidth(item) + 'px'"
-        >
-          {{item.groundTime}}
-        </div>
-      </div>
-    </div>
-  </div> -->
+			</div>
+		</div>
+	</div>
 </div>
